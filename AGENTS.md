@@ -41,6 +41,35 @@ With the flag unset or any other value, `vite.config.js` keeps Vite's
 defaults: no extra allowed hosts, default HMR on the dev port. Nothing else in
 the app branches on the flag.
 
+## The hero film (scroll-driven)
+
+The home page hero is a pinned scene 3 viewports tall: the scroll position
+drives `video.currentTime`, so the user scrubs the timeline rather than
+watching it. `video.play()` is not called anywhere in the app, and the film is
+not looped. The mechanics live in `src/hooks/useScrollScrubVideo.js` — read its
+header comment before touching it. The essentials:
+
+- The scroll listener does nothing but restart a `requestAnimationFrame` loop.
+  Measuring, easing and seeking all happen inside that one tick, and no part of
+  the scroll is held in React state, so a scroll frame re-renders nothing.
+- Seeks are coalesced: one in flight at a time, skipped below roughly half a
+  frame of change, with a timeout so a missing `seeked` event cannot freeze the
+  timeline. The loop idles completely once the picture catches up.
+- The scroll area is `100vh` pinned + 25 vh per second of footage (clamped
+  200–400), derived from `video.duration` — so the film starts on its first
+  frame and is on its last frame exactly at the bottom of the section. Do not
+  hard-code it.
+- The hero signals `src/lib/heroScrubState.js` while it owns the viewport and
+  the header subscribes to it. That module exists only so the header can stay
+  transparent across the whole film instead of turning solid white over it
+  after the first wheel notch.
+- `prefers-reduced-motion: reduce` mounts no video and no tall scroll area at
+  all: the ordinary single-viewport still hero. Nothing is fetched in that
+  case.
+- `src/data/videos.js` documents the encodes. Scrubbing needs dense keyframes
+  (0.33 s), no B-frames and `+faststart`; a normal "web" video swapped in here
+  will stutter on every seek.
+
 ## Verifying a change
 
 1. `curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/` → `200`.
@@ -50,6 +79,13 @@ the app branches on the flag.
    `/properties/<slug>`, `/about`, `/services`, `/team`, `/contact`, `/saved`.
    A slug that does not exist renders the in-app "no longer listed" state, not
    a 404 — that is intended.
+4. The hero film, from the preview console: `video.currentTime` after
+   `window.scrollTo({ top: window.innerHeight * 2, behavior: 'instant' })` must
+   approach `video.duration`, and the page must still report `video.paused`.
+   Frame changes are real rather than a frozen still if drawing the element to
+   a canvas at two scroll positions gives different `getImageData`. Dispatch
+   `new Event('error')` on the video to exercise the failure path — the scroll
+   area collapses to one viewport and the still returns.
 
 ## Gotchas
 
@@ -58,6 +94,11 @@ the app branches on the flag.
   `src/data/images.js` (site-wide art) and `src/data/properties.js` (listing
   covers + galleries). Keep the aspect ratios wide when swapping — cards crop
   to 4:5 and galleries to 16:9.
+- **`public/video/*` (~7.8 MB) is the hero film only**, in three encodes
+  (desktop/mobile MP4, desktop WebM) built for seeking, not for size. They are
+  referenced only from `src/data/videos.js`; the mobile variant is chosen once
+  at mount from a `max-width: 767px` query, so a viewport resize does not swap
+  the source. Without the film the hero still renders the `IMAGES.hero` still.
 - **No image tooling of any kind**, so nothing has been through a resize step.
   The masters are ~1400px wide; keep new ones in that range or the page weight
   balloons.

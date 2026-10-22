@@ -76,12 +76,19 @@ export default {
           from: { opacity: '0', transform: 'translateY(10px)' },
           to: { opacity: '1', transform: 'none' },
         },
+        'hero-loading': {
+          '0%': { transform: 'translateX(-110%)' },
+          '100%': { transform: 'translateX(330%)' },
+        },
       },
       animation: {
         'fade-up': 'fade-up .75s cubic-bezier(.22,1,.36,1) both',
         'hero-zoom': 'hero-zoom 1.6s cubic-bezier(.22,1,.36,1) both',
         'fade-in': 'fade-in .5s ease-out both',
         'sheet-up': 'sheet-up .35s cubic-bezier(.22,1,.36,1) both',
+        'hero-loading': 'hero-loading 1.5s ease-in-out infinite',
+        // Delayed so a warm cache never flashes a loading state.
+        'fade-in-late': 'fade-in .4s ease-out .45s both',
       },
     },
   },

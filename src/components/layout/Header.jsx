@@ -5,6 +5,7 @@ import Logo from './Logo.jsx'
 import Button from '../ui/Button.jsx'
 import { CONTACT, NAV_ITEMS } from '../../data/site.js'
 import { useFavorites } from '../../context/FavoritesContext.jsx'
+import { useHeroScrubActive } from '../../lib/heroScrubState.js'
 import { cn } from '../../lib/cn.js'
 
 export default function Header() {
@@ -14,6 +15,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const isHome = pathname === '/'
+  const heroScrub = useHeroScrubActive()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -44,8 +46,12 @@ export default function Header() {
     }
   }, [menuOpen])
 
-  // Transparent over the hero, solid as soon as the page scrolls or away from home.
-  const transparent = isHome && !scrolled && !menuOpen
+  // Transparent over the hero, solid as soon as the page scrolls or away from
+  // home. On the home page the hero is a scroll-driven film that owns the
+  // viewport for its whole length, so the header stays light until it ends —
+  // otherwise it would turn solid white across the picture after the first
+  // wheel notch.
+  const transparent = isHome && !menuOpen && (!scrolled || heroScrub)
 
   const isActive = (to) => (to === '/' ? pathname === '/' : pathname.startsWith(to))
 
