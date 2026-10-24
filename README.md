@@ -32,6 +32,20 @@ docker compose -f docker-compose.base44.yml up -d
 The dev server runs from the bind-mounted checkout, so edits appear without a
 rebuild. See `AGENTS.md` for sandbox-specific details.
 
+## Deploying (static host)
+
+The site is fully static: `npm run build` emits a self-contained `dist/` (HTML,
+hashed assets, images, video) that any static host can serve.
+
+- **Netlify** — `netlify.toml` sets the build command, the `dist` publish
+  directory and the SPA rewrite.
+- **Vercel** — `vercel.json` sets the same build command, output directory and
+  rewrite.
+
+Both need the rewrite: routes are client-side, so without it a refresh on
+`/properties` returns a 404. Asset paths are absolute, so the site must be
+served from the root of a domain, not a sub-path.
+
 ## Routes
 
 | Route | Page |

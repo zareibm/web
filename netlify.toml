@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Routes are client-side, so every unknown path has to serve the SPA shell
+# instead of a 404 (e.g. a refresh on /properties).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
